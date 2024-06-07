@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>けんたんシステム</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCYS8YqtmL0NNic0EbKH5pQxbIKF77DGI8"></script>
+    <style>
+        h1 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+        }
+    </style>
+    <script>
+        var map;
+        var geocoder;
+        var infowindow;
+
+        function initMap() {
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: { lat: 35.6895, lng: 139.6917 }, // 初期表示は東京に設定
+                zoom: 12
+            });
+            geocoder = new google.maps.Geocoder();
+            infowindow = new google.maps.InfoWindow();
+        }
+
+        function searchLocation() {
+            var postalCode = document.getElementById('postalCode').value;
+            if (postalCode) {
+                geocodeAddress(postalCode);
+            }
+        }
+
+        function geocodeAddress(postalCode) {
+            geocoder.geocode({ 'address': postalCode }, function(results, status) {
+                if (status === 'OK') {
+                    map.setCenter(results[0].geometry.location);
+                    var marker = new google.maps.Marker({
+                        map: map,
+                        position: results[0].geometry.location
+                    });
+                    searchNearby(results[0].geometry.location);
+                } else {
+                    alert('Geocode was not successful for the following reason: ' + status);
+                }
+            });
+        }
+
+        function searchNearby(location) {
+            var service = new google.maps.places.PlacesService(map);
+            var request = {
+                location: location,
+                radius: '500',
+                types: ['restaurant', 'convenience_store']
+            };
+            service.nearbySearch(request, function(results, status) {
+                if (status === google.maps.places.PlacesServiceStatus.OK) {
+                    for (var i = 0; i < results.length; i++) {
+                        createMarker(results[i]);
+                    }
+                }
+            });
+        }
+
+        function createMarker(place) {
+            var placeLoc = place.geometry.location;
+            var marker = new google.maps.Marker({
+                map: map,
+                position: placeLoc
+            });
+
+            google.maps.event.addListener(marker, 'click', function() {
+                infowindow.setContent(place.name);
+                infowindow.open(map, this);
+            });
+        }
+    </script>
+</head>
+<body onload="initMap()">
+    <div class="container">
+        <div class="row mt-5">
+            <div class="col-md-12">
+                <h1 class="text-center">けんたんシステム</h1>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-md-6 offset-md-3">
+                <div class="form-group">
+                    <label for="postalCode">郵便番号で飲食店とコンビニを探す</label>
+                    <input type="text" class="form-control" id="postalCode" placeholder="例: 123-4567">
+                </div>
+                <button class="btn btn-primary btn-block" onclick="searchLocation()">検索</button>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div id="map" style="height: 500px;"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
